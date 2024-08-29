@@ -35,6 +35,16 @@ const Dashboard: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isModalCentered = useBreakpointValue({ base: true, md: false });
 
+  const totalIncome = transactions
+    .filter((transaction) => transaction.type === "income")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  const totalExpenses = transactions
+    .filter((transaction) => transaction.type === "expense")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  const totalBalance = totalIncome - totalExpenses;
+
   const handleAddTransaction = () => {
     if (!newTransactionAmount) return;
 
@@ -53,6 +63,24 @@ const Dashboard: React.FC = () => {
   return (
     <Box ml={"250px"} p={8} flex="1">
       <Heading mb={6}>Dashboard</Heading>
+
+      <VStack spacing={4} align="stretch" mb={6}>
+        <HStack justifyContent="space-between">
+          <Text fontSize="lg" fontWeight="bold" color="green.500">
+            Income: {totalIncome.toFixed(2)}€
+          </Text>
+          <Text fontSize="lg" fontWeight="bold" color="red.500">
+            Expenses: {totalExpenses.toFixed(2)}€
+          </Text>
+          <Text
+            fontSize="xl"
+            fontWeight="bold"
+            color={totalBalance >= 0 ? "green.500" : "red.500"}
+          >
+            Total Balance: {totalBalance.toFixed(2)}€
+          </Text>
+        </HStack>
+      </VStack>
 
       <Button colorScheme="teal" onClick={onOpen} mb={6} maxW="300px" w="100%">
         Add Transaction
