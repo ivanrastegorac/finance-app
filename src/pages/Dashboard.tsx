@@ -17,12 +17,14 @@ import {
   RadioGroup,
   useDisclosure,
   useBreakpointValue,
+  Select,
 } from "@chakra-ui/react";
 
 interface Transaction {
   id: number;
   type: "income" | "expense";
   amount: number;
+  category: string;
   date: string;
 }
 
@@ -32,6 +34,8 @@ const Dashboard: React.FC = () => {
     "income" | "expense"
   >("income");
   const [newTransactionAmount, setNewTransactionAmount] = useState<string>("");
+  const [newTransactionCategory, setNewTransactionCategory] =
+    useState<string>("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isModalCentered = useBreakpointValue({ base: true, md: false });
 
@@ -44,25 +48,43 @@ const Dashboard: React.FC = () => {
     .reduce((acc, transaction) => acc + transaction.amount, 0);
 
   const totalBalance = totalIncome - totalExpenses;
+  const categories = [
+    "Food",
+    "Bills",
+    "Social life",
+    "Transport",
+    "Car",
+    "Gas",
+    "Subscriptions",
+    "Household",
+    "Apparel",
+    "Gift",
+  ];
 
   const handleAddTransaction = () => {
-    if (!newTransactionAmount) return;
+    if (!newTransactionAmount || !newTransactionCategory) return;
 
     const newTransaction: Transaction = {
       id: transactions.length + 1,
       type: newTransactionType,
       amount: parseFloat(newTransactionAmount),
+      category: newTransactionCategory,
       date: new Date().toLocaleDateString(),
     };
 
     setTransactions([...transactions, newTransaction]);
     setNewTransactionAmount("");
+    setNewTransactionCategory("");
     onClose();
   };
 
   return (
     <Box ml={"250px"} p={8} flex="1">
       <Heading mb={6}>Dashboard</Heading>
+
+      <Button colorScheme="teal" onClick={onOpen} mb={6} maxW="300px" w="100%">
+        Add Transaction
+      </Button>
 
       <VStack spacing={4} align="stretch" mb={6}>
         <HStack justifyContent="space-between">
@@ -81,10 +103,6 @@ const Dashboard: React.FC = () => {
           </Text>
         </HStack>
       </VStack>
-
-      <Button colorScheme="teal" onClick={onOpen} mb={6} maxW="300px" w="100%">
-        Add Transaction
-      </Button>
 
       <VStack spacing={4} align="flex-start" w="full">
         {transactions.map((transaction) => (
@@ -134,6 +152,19 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setNewTransactionAmount(e.target.value)}
               type="number"
             />
+
+            <Select
+              placeholder="Select category"
+              value={newTransactionCategory}
+              onChange={(e) => setNewTransactionCategory(e.target.value)}
+              mb={4}
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </Select>
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onClose}>
