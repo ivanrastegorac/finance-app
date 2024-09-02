@@ -48,7 +48,16 @@ const Dashboard: React.FC = () => {
     .reduce((acc, transaction) => acc + transaction.amount, 0);
 
   const totalBalance = totalIncome - totalExpenses;
-  const categories = [
+  const incomeCategories = [
+    "Salary",
+    "Freelance",
+    "Petty cash",
+    "Gifts",
+    "Bonus",
+    "Investments",
+    "Other",
+  ];
+  const expenseCategories = [
     "Food",
     "Bills",
     "Social life",
@@ -59,6 +68,8 @@ const Dashboard: React.FC = () => {
     "Household",
     "Apparel",
     "Gift",
+    "Investments",
+    "Other",
   ];
 
   const handleAddTransaction = () => {
@@ -120,6 +131,7 @@ const Dashboard: React.FC = () => {
             >
               {transaction.type.toUpperCase()}
             </Text>
+            <Text>{transaction.category}</Text>
             <Text>{transaction.amount.toFixed(2)}€</Text>
             <Text>{transaction.date}</Text>
           </HStack>
@@ -151,6 +163,7 @@ const Dashboard: React.FC = () => {
               value={newTransactionAmount}
               onChange={(e) => setNewTransactionAmount(e.target.value)}
               type="number"
+              mb={4}
             />
 
             <Select
@@ -159,7 +172,10 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setNewTransactionCategory(e.target.value)}
               mb={4}
             >
-              {categories.map((category) => (
+              {(newTransactionType === "income"
+                ? incomeCategories
+                : expenseCategories
+              ).map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
