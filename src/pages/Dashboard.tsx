@@ -18,6 +18,7 @@ import {
   useDisclosure,
   useBreakpointValue,
   Select,
+  ButtonGroup,
 } from "@chakra-ui/react";
 
 interface Transaction {
@@ -36,6 +37,7 @@ const Dashboard: React.FC = () => {
   const [newTransactionAmount, setNewTransactionAmount] = useState<string>("");
   const [newTransactionCategory, setNewTransactionCategory] =
     useState<string>("");
+  const [categoryPicker, setCategoryPicker] = useState<boolean>(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isModalCentered = useBreakpointValue({ base: true, md: false });
 
@@ -87,6 +89,11 @@ const Dashboard: React.FC = () => {
     setNewTransactionAmount("");
     setNewTransactionCategory("");
     onClose();
+  };
+
+  const handleCategoryClick = (category: string) => {
+    setNewTransactionCategory(category);
+    setCategoryPicker(false); 
   };
 
   return (
@@ -165,22 +172,30 @@ const Dashboard: React.FC = () => {
               type="number"
               mb={4}
             />
-
-            <Select
-              placeholder="Select category"
+             <Input
+              placeholder="Select Category"
               value={newTransactionCategory}
-              onChange={(e) => setNewTransactionCategory(e.target.value)}
+              readOnly
+              onClick={() => setCategoryPicker(!categoryPicker)}
               mb={4}
-            >
-              {(newTransactionType === "income"
-                ? incomeCategories
-                : expenseCategories
-              ).map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </Select>
+              cursor="pointer"
+            />
+            {categoryPicker && (
+              <ButtonGroup flexWrap="wrap" justifyContent="center" mb={4}>
+                {(newTransactionType === "income" ? incomeCategories : expenseCategories).map(
+                  (category) => (
+                    <Button
+                      key={category}
+                      colorScheme={newTransactionCategory === category ? "teal" : "gray"}
+                      onClick={() => handleCategoryClick(category)}
+                      m={1}
+                    >
+                      {category}
+                    </Button>
+                  )
+                )}
+              </ButtonGroup>
+            )}
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onClose}>
