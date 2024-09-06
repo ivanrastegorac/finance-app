@@ -20,6 +20,7 @@ import {
   Select,
   ButtonGroup,
 } from "@chakra-ui/react";
+import { EditIcon } from "@chakra-ui/icons";
 
 interface Transaction {
   id: number;
@@ -38,6 +39,7 @@ const Dashboard: React.FC = () => {
   const [newTransactionCategory, setNewTransactionCategory] =
     useState<string>("");
   const [categoryPicker, setCategoryPicker] = useState<boolean>(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<number | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isModalCentered = useBreakpointValue({ base: true, md: false });
 
@@ -60,6 +62,7 @@ const Dashboard: React.FC = () => {
     "Other",
   ];
   const expenseCategories = [
+    "Rent",
     "Food",
     "Bills",
     "Social life",
@@ -78,17 +81,39 @@ const Dashboard: React.FC = () => {
     if (!newTransactionAmount || !newTransactionCategory) return;
 
     const newTransaction: Transaction = {
-      id: transactions.length + 1,
+      id: editingTransactionId ? editingTransactionId : transactions.length + 1,
       type: newTransactionType,
       amount: parseFloat(newTransactionAmount),
       category: newTransactionCategory,
       date: new Date().toLocaleDateString(),
-    };
+    }; if (editingTransactionId) {
+      
+      setTransactions((prev) =>
+        prev.map((transaction) =>
+          transaction.id === editingTransactionId ? newTransaction : transaction
+        )
+      );
+    } else {
+      setTransactions([...transactions, newTransaction]);
+    }
 
-    setTransactions([...transactions, newTransaction]);
+    resetForm();
+    onClose();
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransactionId(transaction.id);
+    setNewTransactionType(transaction.type);
+    setNewTransactionAmount(transaction.amount.toString());
+    setNewTransactionCategory(transaction.category);
+    setCategoryPicker(false);
+    onOpen(); 
+  };
+
+  const resetForm = () => {
     setNewTransactionAmount("");
     setNewTransactionCategory("");
-    onClose();
+    setEditingTransactionId(null);
   };
 
   const handleCategoryClick = (category: string) => {
@@ -141,6 +166,9 @@ const Dashboard: React.FC = () => {
             <Text>{transaction.category}</Text>
             <Text>{transaction.amount.toFixed(2)}€</Text>
             <Text>{transaction.date}</Text>
+            <Button onClick={() => handleEditTransaction(transaction)}  size="sm">
+              <EditIcon />
+            </Button>
           </HStack>
         ))}
         {transactions.length === 0 && (
@@ -151,12 +179,10 @@ const Dashboard: React.FC = () => {
       <Modal isOpen={isOpen} onClose={onClose} isCentered={isModalCentered}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Transaction</ModalHeader>
+          <ModalHeader>{editingTransactionId ? "Edit Transaction" : "Add New Transaction"}</ModalHeader>
           <ModalBody>
             <RadioGroup
-              onChange={(value: "income" | "expense") =>
-                setNewTransactionType(value)
-              }
+              onChange={(value: "income" | "expense") => setNewTransactionType(value)}
               value={newTransactionType}
               mb={4}
             >
@@ -172,7 +198,9 @@ const Dashboard: React.FC = () => {
               type="number"
               mb={4}
             />
-             <Input
+
+            <Text mb={2}>Category:</Text>
+            <Input
               placeholder="Select Category"
               value={newTransactionCategory}
               readOnly
@@ -180,6 +208,7 @@ const Dashboard: React.FC = () => {
               mb={4}
               cursor="pointer"
             />
+
             {categoryPicker && (
               <ButtonGroup flexWrap="wrap" justifyContent="center" mb={4}>
                 {(newTransactionType === "income" ? incomeCategories : expenseCategories).map(
@@ -202,7 +231,7 @@ const Dashboard: React.FC = () => {
               Back
             </Button>
             <Button colorScheme="blue" onClick={handleAddTransaction}>
-              Save
+              {editingTransactionId ? "Save Changes" : "Save"}
             </Button>
           </ModalFooter>
         </ModalContent>
