@@ -6,22 +6,11 @@ import {
   VStack,
   HStack,
   Text,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Radio,
-  RadioGroup,
   useDisclosure,
-  useBreakpointValue,
-  Select,
-  ButtonGroup,
 } from "@chakra-ui/react";
 import { EditIcon } from "@chakra-ui/icons";
-import CategoryPicker from "../components/CategoryPicker";
+import TransactionModal from "../components/TransactionModal";
+import Balance from "../components/Balance";
 
 interface Transaction {
   id: number;
@@ -33,18 +22,16 @@ interface Transaction {
 
 const Dashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [newTransactionType, setNewTransactionType] = useState<
-    "income" | "expense"
-  >("income");
-  const [newTransactionAmount, setNewTransactionAmount] = useState<string>("");
-  const [newTransactionCategory, setNewTransactionCategory] =
-    useState<string>("");
+  const [formState, setFormState] = useState({
+    type: "income" as "income" | "expense",
+    amount: "",
+    category: "",
+  });
   const [categoryPicker, setCategoryPicker] = useState<boolean>(false);
   const [editingTransactionId, setEditingTransactionId] = useState<
     number | null
   >(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isModalCentered = useBreakpointValue({ base: true, md: false });
 
   const totalIncome = transactions
     .filter((transaction) => transaction.type === "income")
@@ -55,41 +42,23 @@ const Dashboard: React.FC = () => {
     .reduce((acc, transaction) => acc + transaction.amount, 0);
 
   const totalBalance = totalIncome - totalExpenses;
-  const incomeCategories = [
-    "Salary",
-    "Freelance",
-    "Petty cash",
-    "Gifts",
-    "Bonus",
-    "Investments",
-    "Other",
-  ];
-  const expenseCategories = [
-    "Rent",
-    "Food",
-    "Bills",
-    "Social life",
-    "Transport",
-    "Car",
-    "Gas",
-    "Subscriptions",
-    "Household",
-    "Apparel",
-    "Gift",
-    "Investments",
-    "Other",
-  ];
 
   const handleAddTransaction = () => {
-    if (!newTransactionAmount || !newTransactionCategory) return;
+    if (
+      !formState.amount ||
+      !formState.category ||
+      isNaN(parseFloat(formState.amount))
+    )
+      return;
 
     const newTransaction: Transaction = {
       id: editingTransactionId ? editingTransactionId : transactions.length + 1,
-      type: newTransactionType,
-      amount: parseFloat(newTransactionAmount),
-      category: newTransactionCategory,
+      type: formState.type,
+      amount: parseFloat(formState.amount),
+      category: formState.category,
       date: new Date().toLocaleDateString(),
     };
+
     if (editingTransactionId) {
       setTransactions((prev) =>
         prev.map((transaction) =>
@@ -106,21 +75,22 @@ const Dashboard: React.FC = () => {
 
   const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransactionId(transaction.id);
-    setNewTransactionType(transaction.type);
-    setNewTransactionAmount(transaction.amount.toString());
-    setNewTransactionCategory(transaction.category);
+    setFormState({
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      category: transaction.category,
+    });
     setCategoryPicker(false);
     onOpen();
   };
 
   const resetForm = () => {
-    setNewTransactionAmount("");
-    setNewTransactionCategory("");
+    setFormState({ type: "income", amount: "", category: "" });
     setEditingTransactionId(null);
   };
 
   const handleCategoryClick = (category: string) => {
-    setNewTransactionCategory(category);
+    setFormState((prev) => ({ ...prev, category }));
     setCategoryPicker(false);
   };
 
@@ -133,21 +103,11 @@ const Dashboard: React.FC = () => {
       </Button>
 
       <VStack spacing={4} align="stretch" mb={6}>
-        <HStack justifyContent="space-between">
-          <Text fontSize="lg" fontWeight="bold" color="green.500">
-            Income: {totalIncome.toFixed(2)}€
-          </Text>
-          <Text fontSize="lg" fontWeight="bold" color="red.500">
-            Expenses: {totalExpenses.toFixed(2)}€
-          </Text>
-          <Text
-            fontSize="xl"
-            fontWeight="bold"
-            color={totalBalance >= 0 ? "green.500" : "red.500"}
-          >
-            Total Balance: {totalBalance.toFixed(2)}€
-          </Text>
-        </HStack>
+        <Balance
+          totalIncome={totalIncome}
+          totalExpenses={totalExpenses}
+          totalBalance={totalBalance}
+        />
       </VStack>
 
       <VStack spacing={4} align="flex-start" w="full">
@@ -182,65 +142,27 @@ const Dashboard: React.FC = () => {
         )}
       </VStack>
 
-      <Modal isOpen={isOpen} onClose={onClose} isCentered={isModalCentered}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            {editingTransactionId ? "Edit Transaction" : "Add New Transaction"}
-          </ModalHeader>
-          <ModalBody>
-            <RadioGroup
-              onChange={(value: "income" | "expense") =>
-                setNewTransactionType(value)
-              }
-              value={newTransactionType}
-              mb={4}
-            >
-              <HStack spacing={4}>
-                <Radio value="income">Income</Radio>
-                <Radio value="expense">Expense</Radio>
-              </HStack>
-            </RadioGroup>
-            <Input
-              placeholder="Enter amount"
-              value={newTransactionAmount}
-              onChange={(e) => setNewTransactionAmount(e.target.value)}
-              type="number"
-              mb={4}
-            />
-
-            <Text mb={2}>Category:</Text>
-            <Input
-              placeholder="Select Category"
-              value={newTransactionCategory}
-              readOnly
-              onClick={() => setCategoryPicker(!categoryPicker)}
-              mb={4}
-              cursor="pointer"
-            />
-
-            {categoryPicker && (
-              <CategoryPicker
-                categories={
-                  newTransactionType === "income"
-                    ? incomeCategories
-                    : expenseCategories
-                }
-                selectedCategory={newTransactionCategory}
-                onCategoryClick={handleCategoryClick}
-              />
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onClose}>
-              Back
-            </Button>
-            <Button colorScheme="blue" onClick={handleAddTransaction}>
-              {editingTransactionId ? "Save Changes" : "Save"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <TransactionModal
+        isOpen={isOpen}
+        onClose={onClose}
+        editingTransactionId={editingTransactionId}
+        newTransactionType={formState.type}
+        newTransactionAmount={formState.amount}
+        newTransactionCategory={formState.category}
+        setNewTransactionType={(type) =>
+          setFormState((prev) => ({ ...prev, type }))
+        }
+        setNewTransactionAmount={(amount) =>
+          setFormState((prev) => ({ ...prev, amount }))
+        }
+        setNewTransactionCategory={(category) =>
+          setFormState((prev) => ({ ...prev, category }))
+        }
+        categoryPicker={categoryPicker}
+        setCategoryPicker={setCategoryPicker}
+        handleCategoryClick={handleCategoryClick}
+        handleAddTransaction={handleAddTransaction}
+      />
     </Box>
   );
 };
