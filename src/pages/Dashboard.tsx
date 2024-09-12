@@ -8,11 +8,11 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { EditIcon } from "@chakra-ui/icons";
 import TransactionModal from "../components/TransactionModal";
 import Balance from "../components/Balance";
+import Transaction from "../components/Transaction";
 
-interface Transaction {
+interface TransactionData {
   id: number;
   type: "income" | "expense";
   amount: number;
@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
     )
       return;
 
-    const newTransaction: Transaction = {
+    const newTransaction: TransactionData = {
       id: editingTransactionId ? editingTransactionId : transactions.length + 1,
       type: formState.type,
       amount: parseFloat(formState.amount),
@@ -112,30 +112,11 @@ const Dashboard: React.FC = () => {
 
       <VStack spacing={4} align="flex-start" w="full">
         {transactions.map((transaction) => (
-          <HStack
+          <Transaction
             key={transaction.id}
-            w="full"
-            justifyContent="space-between"
-            p={4}
-            bg="gray.100"
-            borderRadius="md"
-          >
-            <Text
-              fontWeight="bold"
-              color={transaction.type === "income" ? "green.500" : "red.500"}
-            >
-              {transaction.type.toUpperCase()}
-            </Text>
-            <Text>{transaction.category}</Text>
-            <Text>{transaction.amount.toFixed(2)}€</Text>
-            <Text>{transaction.date}</Text>
-            <Button
-              onClick={() => handleEditTransaction(transaction)}
-              size="sm"
-            >
-              <EditIcon />
-            </Button>
-          </HStack>
+            transaction={transaction}
+            onEdit={handleEditTransaction}
+          />
         ))}
         {transactions.length === 0 && (
           <Text>No transactions yet. Start by adding one.</Text>
